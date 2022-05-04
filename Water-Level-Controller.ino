@@ -5,6 +5,7 @@ int travelTime;
 float distance;
 
 //Water Pump Control
+const int dryRunPin = 3;
 const int relayPin = 2;
 String state = "Full";
 
@@ -13,31 +14,40 @@ void setup() {
   pinMode(trigPin, OUTPUT);
   pinMode(echoPin, INPUT);
 
+  pinMode(dryRunPin, INPUT_PULLUP);
   pinMode(relayPin, OUTPUT);
 }
 void loop() {
   // put your main code here, to run repeatedly:
 
-  sendSoundWave();                       //Send a sound Wave
-  travelTime = pulseIn(echoPin, HIGH);   //Get Travel Time
-  distance = travelTime * 0.034 / 2;     //Calculate Distance in cm
+  if (digitalRead(dryRunPin) == 1) {
+    //Dry Run Protection
+    digitalWrite(relayPin, HIGH); //turn off water pump
 
-  //Open and Close Logic
-  if (state == "Empty") {
-    //turn on water pump
-    digitalWrite(relayPin, LOW);
-    if (distance < 4) {
-      state = "Full";
-    }
+  } else {
 
-  } else if(state=="Full") {
-    //turn off water pump
-    digitalWrite(relayPin, HIGH);
-    if (distance > 16) {
-      state = "Empty";
+    sendSoundWave();                       //Send a sound Wave
+    travelTime = pulseIn(echoPin, HIGH);   //Get Travel Time
+    distance = travelTime * 0.034 / 2;     //Calculate Distance in cm
+
+    //Open and Close Logic
+    if (state == "Empty") {
+      //turn on water pump
+      digitalWrite(relayPin, LOW);
+      if (distance < 4) {
+        state = "Full";
+      }
+
+    } else if (state == "Full") {
+      //turn off water pump
+      digitalWrite(relayPin, HIGH);
+      if (distance > 12) {
+        state = "Empty";
+      }
+
     }
-    
   }
+
   delay(100);
 }
 
